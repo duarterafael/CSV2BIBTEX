@@ -100,14 +100,14 @@ public class Csv2Ris {
 			((List) bibs2).add(temp);
 		}
 
-		if (((List) bibs2).size() == 0)
-			System.exit(-1);
-		System.out.println("---------------------------------------");
-		System.out.println("Writing output file...");
-		System.out.println("---------------------------------------");
-		text.writeSmallTextFile((List) bibs2, outputFileName);
-		System.out.println("---------------------------------------");
-		System.out.println("DONE!");
+//		if (((List) bibs2).size() == 0)
+//			//System.exit(-1);
+//		System.out.println("---------------------------------------");
+//		System.out.println("Writing output file...");
+//		System.out.println("---------------------------------------");
+//		text.writeSmallTextFile((List) bibs2, outputFileName);
+//		System.out.println("---------------------------------------");
+//		System.out.println("DONE!");
 	}
 
 	static final String OUTPUT_FILE_NAME = "file.bib";

@@ -84,7 +84,7 @@ public class Main {
 							}else {
 								try {
 									Csv2Ris.export(chooser.getSelectedFile());
-									JOptionPane.showMessageDialog(frame, "Ris file successfully generated",
+									JOptionPane.showConfirmDialog(frame, "Ris file successfully generated",
 											"", JOptionPane.OK_OPTION);
 								} catch (IOException e1) {
 									JOptionPane.showMessageDialog(frame, e1.getMessage(),
