@@ -1,6 +1,7 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,19 +17,19 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SPRINGER_CSV2BIB {
+public class Csv2Ris {
 	static final String FILE_NAME = "file.csv";
 	static final Charset ENCODING = StandardCharsets.UTF_8;
 
-	public SPRINGER_CSV2BIB() {
+	public Csv2Ris() {
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		SPRINGER_CSV2BIB text = new SPRINGER_CSV2BIB();
-		String fileName = "C:\\CSV to BBT\\SearchResults.csv";
-		String outputFileName = "C:\\CSV to BBT\\file.bib";
+//	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void export(File file) throws IOException, InterruptedException {
+		Csv2Ris text = new Csv2Ris();
+		String outputFileName = file.getParentFile().getAbsolutePath()+File.separator+file.getName().replaceFirst("[.][^.]+$", "")+".ris";
 
-		List<String> lines = text.readSmallTextFile(fileName);
+		List<String> lines = text.readSmallTextFile(file.getPath());
 		List<String> urls = new ArrayList();
 		List<String> bibs = new ArrayList();
 
