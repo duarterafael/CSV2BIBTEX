@@ -1,8 +1,11 @@
 
+import java.awt.Font;
+import java.awt.TextArea;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -14,21 +17,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+
+import javax.swing.JTextArea;
 
 public class Csv2Ris {
 	static final String FILE_NAME = "file.csv";
 	static final Charset ENCODING = StandardCharsets.UTF_8;
+	private static final String prefix = "http://link.springer.com/";
 
 	public Csv2Ris() {
 	}
 
-//	public static void main(String[] args) throws IOException, InterruptedException {
-	public static void export(File file) throws IOException, InterruptedException {
+	public static void export(File file, JTextArea output) throws IOException {
 		Csv2Ris text = new Csv2Ris();
-		String outputFileName = file.getParentFile().getAbsolutePath()+File.separator+file.getName().replaceFirst("[.][^.]+$", "")+".ris";
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+		String outputFileName = file.getParentFile().getAbsolutePath() + File.separator
+				+ file.getName().replaceFirst("[.][^.]+$", "") + "_" + timeStamp + ".ris";
 
+		String logFileName = file.getParentFile().getAbsolutePath() + File.separator
+				+ file.getName().replaceFirst("[.][^.]+$", "") + "_" + timeStamp +".txt";
 		List<String> lines = text.readSmallTextFile(file.getPath());
 		List<String> urls = new ArrayList();
 		List<String> bibs = new ArrayList();
@@ -37,14 +49,16 @@ public class Csv2Ris {
 			System.exit(-1);
 		for (String line : lines) {
 			try {
-				String[] fields = line.split("\",\"");
-				
-				String DOI = fields[5].replaceAll("\"", "");
-				// String url = "https://citation-needed.springer.com/v2/references/" + DOI
-					// 	+ "?format=bibtex&flavour=citation";
-				
-					String url = "https://citation-needed.springer.com/v2/references/" + DOI
-					+ "?format=refman&flavour=citation";
+
+				if (!line.contains(prefix)) {
+					continue;
+				}
+
+				String DOI = line.substring(line.indexOf(prefix) + prefix.length());
+				DOI = DOI.substring(DOI.indexOf("/") + 1, DOI.indexOf("\""));
+
+				String url = "https://citation-needed.springer.com/v2/references/" + DOI
+						+ "?format=refman&flavour=citation";
 
 				urls.add(url);
 
@@ -53,36 +67,54 @@ public class Csv2Ris {
 				e.printStackTrace();
 			}
 		}
-
-		System.out.println("---------------------------------------");
-		System.out.println("Found: " + lines.size() + " citations");
-		if (urls.size() == 0)
-			System.exit(-1);
-		System.out.println("---------------------------------------");
-		System.out.print("Starting...");
-		Thread.sleep(3000L);
-		System.out.println("---------------------------------------");
 		int count = 1;
-		URL uri;
 		BufferedInputStream in = null;
 		FileOutputStream fout = null;
-		fout = new FileOutputStream(outputFileName);
+		FileWriter logFile = new FileWriter(logFileName);
+		
 		try {
+			setLog("---------------------------------------", false, output, logFile);
+			setLog("CSV lines count: " + lines.size() + " citations founded: " + urls.size() + "\n", false, output, logFile);
+			if (urls.size() == 0)
+				System.exit(-1);
+			setLog("---------------------------------------", false, output, logFile);
+			setLog("Starting...\\n", false, output, logFile);
+			Thread.sleep(3000L);
+			setLog("---------------------------------------", false, output, logFile);
+			fout = new FileOutputStream(outputFileName);
+			 
 			for (String strUrl : urls) {
-				System.out.println("Processing: " + count++);
-				System.out.println(strUrl);
+				try {
 
-								in = new BufferedInputStream(new URL(strUrl).openStream());
-				
+					setLog("Processing: " + (count++) + "/" + urls.size() + "\n", false, output,logFile);
+					setLog("Processing: " + strUrl, false, output, logFile);
 
-				final byte data[] = new byte[1024];
-				int count1;
-				while ((count1 = in.read(data, 0, 1024)) != -1) {
-					fout.write(data, 0, count1);
+					in = new BufferedInputStream(new URL(strUrl).openStream());
+
+					final byte data[] = new byte[1024];
+					int count1;
+					while ((count1 = in.read(data, 0, 1024)) != -1) {
+						fout.write(data, 0, count1);
+					}
+
+				} catch (IOException e1) {
+					setLog("Erro in line " + count + " Erro:" + e1.getMessage(), true, output, logFile);
+				} finally {
+					
 				}
-
 			}
-		} finally {
+
+			Object bibs2 = new ArrayList();
+			for (String bib : bibs) {
+				String temp = bib.replaceAll("(=)", " = ");
+				System.out.println(temp);
+				((List) bibs2).add(temp);
+			}
+		} catch (IOException e1) {
+			output.append("Erro in line " + count + " Erro:" + e1.getMessage());
+		} catch (InterruptedException e1) {
+			output.append("Erro in line " + count + " Erro:" + e1.getMessage());
+		}finally {
 			if (in != null) {
 				in.close();
 			}
@@ -91,26 +123,16 @@ public class Csv2Ris {
 			}
 		}
 
-		System.out.println("---------------------------------------");
-		System.out.println("Workaround: adding spaces between \"=\"");
-		Object bibs2 = new ArrayList();
-		for (String bib : bibs) {
-			String temp = bib.replaceAll("(=)", " = ");
-			System.out.println(temp);
-			((List) bibs2).add(temp);
-		}
+		setLog("---------------------------------------\nDONE", true, output, logFile);
 
-//		if (((List) bibs2).size() == 0)
-//			//System.exit(-1);
-//		System.out.println("---------------------------------------");
-//		System.out.println("Writing output file...");
-//		System.out.println("---------------------------------------");
-//		text.writeSmallTextFile((List) bibs2, outputFileName);
-//		System.out.println("---------------------------------------");
-//		System.out.println("DONE!");
 	}
 
-	static final String OUTPUT_FILE_NAME = "file.bib";
+	private static void setLog(String log, boolean isErro, JTextArea output, FileWriter  logFile) throws IOException {
+
+		System.out.println(log);
+		logFile.write("\n"+log);
+
+	}
 
 	List<String> readSmallTextFile(String aFileName) {
 		try {
